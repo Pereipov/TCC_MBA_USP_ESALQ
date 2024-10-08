@@ -37,9 +37,6 @@ pio.renderers.default='browser'
 
 #%% Importando o banco de dados
 
-# Objetivo: agrupar os clientes de uma operadora de cartão de crédito
-# Analisar os grupos de clientes mais e menos leais à marca (por meio do uso)
-
 dados_base_numeros = pd.read_excel('base_numeros.xlsx')
 dados_base_clientes = pd.read_excel('base_clientes.xlsx')
 ## Fonte: https://www.kaggle.com/datasets/aryashah2k/cr'edit-card-customer-data
@@ -54,7 +51,7 @@ print(base_numeros_final.info())
 
 #%% Estatísticas descritivas das variáveis
 
-# Primeiramente, vamos excluir as variáveis que não serão utilizadas
+# Excluir as variáveis que não serão utilizadas
 
 #dados_transações_cluster = dados_base_numeros.drop(columns=['id_tran','cpf'])
 dados_transações_cluster = base_numeros_final.drop(columns= ['CPF'])
@@ -215,3 +212,4 @@ cluster_sing = AgglomerativeClustering(n_clusters = 3, metric = 'cityblock', lin
 indica_cluster_sing = cluster_sing.fit_predict(varejo)
 transações_pad['cluster_single'] = indica_cluster_sing
 transações_pad['cluster_single'] = transações_pad['cluster_single'].astype('category')
+
