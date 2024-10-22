@@ -33,11 +33,14 @@ import pingouin as pg
 import plotly.express as px 
 import plotly.io as pio
 import matplotlib as plt1
+import plotly.graph_objects as go
 pio.renderers.default='browser'
 
 #%% Importando o banco de dados
 
-dados_base_numeros = pd.read_excel('base_numeros.xlsx')
+# Objetivo: agrupar os clientes de uma operadora de cartão de crédito
+
+dados_base_numeros = pd.read_excel('base_numeros_final.xlsx')
 dados_base_clientes = pd.read_excel('base_clientes.xlsx')
 ## Fonte: https://www.kaggle.com/datasets/aryashah2k/cr'edit-card-customer-data
 
@@ -51,10 +54,10 @@ print(base_numeros_final.info())
 
 #%% Estatísticas descritivas das variáveis
 
-# Excluir as variáveis que não serão utilizadas
+# Primeiramente, vamos excluir as variáveis que não serão utilizadas
 
 #dados_transações_cluster = dados_base_numeros.drop(columns=['id_tran','cpf'])
-dados_transações_cluster = base_numeros_final.drop(columns= ['CPF'])
+dados_transações_cluster = base_numeros_final.drop(columns= ['CPF', 'Faixa Etaria'])
 
 # Obtendo as estatísticas descritivas das variáveis
 
@@ -70,6 +73,63 @@ transações_pad = dados_transações_cluster.apply(zscore, ddof=1)
 print(round(transações_pad.mean(), 3))
 print(round(transações_pad.std(), 3))
 
+
+# Poderíamos fazer vários boxplot em um mesmo gráfico
+
+var_boxplot = transações_pad[['VALOR_TOTAL_GASTO', 'IDADE', 'RENDA_MENSAL']]
+
+sns.boxplot(data=var_boxplot, width = 0.6, palette='rocket')
+plt.xlabel('Produtos',fontsize=12)
+plt.ylabel('Valores',fontsize=12)
+plt.show()
+
+# Vamos torná-lo mais informativo
+
+fig = px.box(var_boxplot, 
+             width = 900)
+fig.update_layout(title='BOXPLOT',
+                  xaxis_title='Produtos',
+                  yaxis_title='Valores',
+                  plot_bgcolor='lightblue')
+fig.show()
+
+
+
+#%% Gráfico de calor
+
+# Vamos gerar um gráfico de calor que distingue informações por meio de cores
+# O banco de dados contém informações sobre a quantidade vendida em 3 produtos
+
+#vendas_regional = pd.read_excel("(2) vendas_regiao.xlsx")
+
+# Inicialmente, vamos selecionar as variáveis quantitativas do banco de dados
+
+#vendas_reg = vendas_regional[['produtoA','produtoB','produtoC']]
+
+# Vamos gerar o gráfico de calor no contexto das correlações entre variáveis
+# Portanto, primeiramente, vamos criar a matriz de correlações de Pearson
+# Lembrando: selecionar apenas as variáveis quantitativas da base de dados
+
+corr = transações_pad.corr()
+
+# Vamos elaborar um gráfico de calor (heatmap) com o plotly
+
+fig = go.Figure()
+
+fig.add_trace(
+    go.Heatmap(
+        x = corr.columns,
+        y = corr.index,
+        z = np.array(corr),
+        text=corr.values,
+        texttemplate='%{text:.2f}',
+        colorscale='ice'))
+
+fig.update_layout(
+    height = 600,
+    width = 600)
+
+fig.show()
 
 #%% Gráfico 3D das observações
 
@@ -213,3 +273,96 @@ indica_cluster_sing = cluster_sing.fit_predict(varejo)
 transações_pad['cluster_single'] = indica_cluster_sing
 transações_pad['cluster_single'] = transações_pad['cluster_single'].astype('category')
 
+#Análise Fatorial (Teste Esferificidade de Bartlett)
+
+#%% Instalando os pacotes
+
+!pip install pandas
+!pip install numpy
+!pip install factor_analyzer
+!pip install sympy
+!pip install scipy
+!pip install matplotlib
+!pip install seaborn
+!pip install plotly
+!pip install pingouin
+!pip install pyshp
+
+#%% Importando os pacotes necessários
+
+import pandas as pd
+import numpy as np
+from factor_analyzer import FactorAnalyzer
+from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity
+import pingouin as pg
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.io as pio
+pio.renderers.default = 'browser'
+import plotly.graph_objects as go
+
+#%% Importando o banco de dados
+
+base_clientes = pd.read_excel("base_clientes.xlsx")
+base_transacoes_tratada = pd.read_excel("base_transacoes_tratada.xlsx")
+base_join = pd.read_excel("base_join.xlsx")
+base_numeros = pd.read_excel("base_numeros.xlsx")
+base_clientes_tratada = pd.read_excel("base_clientes_tratada.xlsx")
+base_numeros_final = pd.read_excel("base_numeros_final.xlsx")
+
+
+#%%Group by na tabela de clientes
+
+#tab_base_clientes = base_clientes.groupby
+#print('tab_base_clientes')
+
+#base_clientes_pd = pd.
+
+#%% Estatísticas descritiva das variáveis
+
+#tab_desc_clientes = tab_base_clientes.describe()
+tab_desc_transacoes_tratada = base_transacoes_tratada.describe()
+tab_desc_base_join = base_join.describe()
+tab_desc_clientes_tratada = base_clientes_tratada.describe()
+tab_desc_numeros_final = base_numeros_final.describe()
+tab_desc_numeros = base_numeros.describe()
+
+#%% Analisando as correlações de Pearson
+
+# Matriz de correlações
+
+corr = base_numeros.corr()
+
+# Gráfico interativo
+
+fig = go.Figure()
+
+fig.add_trace(
+    go.Heatmap(
+        x = corr.columns,
+        y = corr.index,
+        z = np.array(corr),
+        text=corr.values,
+        texttemplate='%{text:.3f}',
+        colorscale='viridis'))
+
+fig.update_layout(
+    height = 750,
+    width = 750,
+    yaxis=dict(autorange="reversed"))
+
+fig.show()
+
+#%% Selecionando as variáveis de interesse para a análise
+
+# Vamos deixar o preço das casas de fora da análise fatorial! 
+
+base_numeros_pca = base_numeros.drop(columns=['id_tran','cpf'])
+
+
+#%% Teste de Esfericidade de Bartlett
+
+bartlett, p_value = calculate_bartlett_sphericity(base_numeros_pca)
+
+print(f'Qui² Bartlett: {round(bartlett, 2)}')
+print(f'p-valor: {round(p_value, 4)}')
